@@ -2,35 +2,38 @@ name: Collect Weather Data
 
 on:
   schedule:
-    - cron: "0 */6 * * *"  # Runs every 6 hours 
+    - cron: "0 */6 * * *"  # Runs every 6 hours
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
-  collect-data:
+  collect:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set Up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: '3.9'
 
-      - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Run Weather Data Collection Script
+      - name: Run script to collect data
         env:
-          WEATHER_API_KEY: ${{ secrets.API_KEY }}
+          WEATHER_API_KEY: ${{ secrets.API_KEY }}  # API Key from GitHub Secrets
         run: python api-data.py
 
-      - name: Commit and Push Data
+      - name: Configure Git
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          git add weather_data.json
+
+      - name: Commit and Push Changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}  # GitHub Personal Access Token (PAT)
+        run: |
+          git add weather_data/
           git commit -m "Update weather data [$(date)]" || echo "No changes to commit"
-          git push
+          git push https://x-access-token:${GH_PAT}@github.com/vbisso/weather-data-collection.git main
